@@ -7,6 +7,9 @@
 // Include the Bounce2 library found here :
 // https://github.com/thomasfredericks/Bounce-Arduino-Wiring
 #include <Bounce2.h>
+#include <Arduino.h>
+#include "flamethrower.h"
+#include "beat.h"
 
 #define BUTTON_TOP_LEFT_PIN 1
 #define BUTTON_TOP_MIDDLE_PIN 3
@@ -19,15 +22,16 @@
 #define LED_LEFT 19
 #define LED_RIGHT 12
 
-#define MAX_POOF_DURATION 60
-
 elapsedMillis timer;
+int loggedTimer;
+Flamethrower leftFire = Flamethrower(SOLENOID_LEFT, LED_LEFT);
+Flamethrower rightFire = Flamethrower(SOLENOID_RIGHT, LED_RIGHT);
 
-int leftPoofEndTime = 0;
-int rightPoofEndTime = 0;
-
-bool leftPoofing = 0;
-bool rightPoofing = 0;
+const unsigned int techno_beat_intervals[] = {        100,        100,        100,        100,        500 };
+const unsigned int techno_beat_durations[] = {         20,         20,         20,         20,         60 };
+Flamethrower *techno_beat_flamethrowers[] =  {  &leftFire,  &leftFire,  &leftFire,  &leftFire, &rightFire };
+const unsigned int techno_beat_length = 5;
+Beat technoBeat = Beat(techno_beat_intervals, techno_beat_durations, techno_beat_flamethrowers, techno_beat_length);
 
 // Instantiate a Bounce object
 Bounce debouncer_top_left = Bounce();
@@ -35,54 +39,6 @@ Bounce debouncer_top_middle = Bounce();
 Bounce debouncer_top_right = Bounce();
 Bounce debouncer_bottom_left = Bounce();
 Bounce debouncer_bottom_right = Bounce();
-
-void left_fire_on(int duration = 0)
-{
-    if(duration < 1 || duration > MAX_POOF_DURATION)
-    {
-        duration = MAX_POOF_DURATION;
-    }
-    leftPoofEndTime = timer + duration;
-    
-    digitalWrite(SOLENOID_LEFT, HIGH);
-    digitalWrite(LED_LEFT, HIGH);
-    
-    leftPoofing = true;
-    Serial.println("Left fire on");
-}
-
-void left_fire_off()
-{
-    digitalWrite(SOLENOID_LEFT, LOW);
-    digitalWrite(LED_LEFT, LOW);
-    
-    leftPoofing = false;
-    Serial.println("Left fire off");
-}
-
-void right_fire_on(int duration = 0)
-{
-    if(duration < 1 || duration > MAX_POOF_DURATION)
-    {
-        duration = MAX_POOF_DURATION;
-    }
-    rightPoofEndTime = timer + duration;
-    
-    digitalWrite(SOLENOID_RIGHT, HIGH);
-    digitalWrite(LED_RIGHT, HIGH);
-    
-    rightPoofing = true;
-    Serial.println("Right fire on");
-}
-
-void right_fire_off()
-{
-    digitalWrite(SOLENOID_RIGHT, LOW);
-    digitalWrite(LED_RIGHT, LOW);
-    
-    rightPoofing = false;
-    Serial.println("Left fire off");
-}
 
 void setup()
 {
@@ -105,9 +61,6 @@ void setup()
     debouncer_top_right.interval(5); // interval in ms
     debouncer_bottom_left.interval(5); // interval in ms
     debouncer_bottom_right.interval(5); // interval in ms
-
-    left_fire_off();
-    right_fire_off();
 }
 
 void loop()
@@ -126,28 +79,37 @@ void loop()
     bool bottom_left_pressed = debouncer_bottom_left.fallingEdge();
     bool bottom_right_pressed = debouncer_bottom_right.fallingEdge();
 
-    if ( leftPoofing && timer > leftPoofEndTime )
+    if(timer % 1000 == 0)
     {
-        Serial.println("Left fire timeout");
-        left_fire_off();
-    }
-    if ( rightPoofing && timer > rightPoofEndTime )
-    {
-        Serial.println("Right fire timeout");
-        right_fire_off();
+        if(timer != loggedTimer)
+        {
+            loggedTimer = timer;
+        }
     }
 
+    leftFire.process(timer);
+    rightFire.process(timer);
+
+    technoBeat.process(timer);
+
     // Turn on or off the LED as determined by the state :
-    if ( top_left_pressed && !leftPoofing)
+    if ( top_left_pressed )
     {
         Serial.println("Poof!");
-        if(!leftPoofing)
-        {
-            left_fire_on(14);
-            right_fire_on();
-        }
-  } 
-  
+
+        leftFire.poof(timer, 14);
+        rightFire.poof(timer, 14);
+    }
+
+    if( top_middle_pressed )
+    {
+        technoBeat.start(timer);
+    }
+
+    if( top_right_pressed)
+    {
+        technoBeat.stop();
+    }
 }
 
 
