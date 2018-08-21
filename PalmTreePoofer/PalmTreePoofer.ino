@@ -22,16 +22,40 @@
 #define LED_LEFT 19
 #define LED_RIGHT 12
 
+#define LOG_INTERVAL 1000
+
 elapsedMillis timer;
 int loggedTimer;
-Flamethrower leftFire = Flamethrower(SOLENOID_LEFT, LED_LEFT);
-Flamethrower rightFire = Flamethrower(SOLENOID_RIGHT, LED_RIGHT);
+Flamethrower leftFire = Flamethrower(SOLENOID_LEFT, LED_LEFT, 15);
+Flamethrower rightFire = Flamethrower(SOLENOID_RIGHT, LED_RIGHT, 80);
 
-const unsigned int techno_beat_intervals[] = {        100,        100,        100,        100,        500 };
-const unsigned int techno_beat_durations[] = {         20,         20,         20,         20,         60 };
-Flamethrower *techno_beat_flamethrowers[] =  {  &leftFire,  &leftFire,  &leftFire,  &leftFire, &rightFire };
-const unsigned int techno_beat_length = 5;
-Beat technoBeat = Beat(techno_beat_intervals, techno_beat_durations, techno_beat_flamethrowers, techno_beat_length);
+Flamethrower *fire1 = &leftFire;
+Flamethrower *fire2 = &rightFire;
+/*
+const uint32_t     techno_beat_times[]     = {     0,   126,   252,   378,   504,   630,   756,  1405,  1511,  1952,  2102,  2253,  2393,  2833,  3053,  3273 };
+const int          techno_beat_durations[] = {    -1,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0 };
+Flamethrower *techno_beat_flamethrowers[] =  { fire1, fire1, fire1, fire1, fire1, fire2, fire1, fire1, fire2, fire1, fire1, fire1, fire2, fire1, fire1, fire2 };
+const unsigned int techno_beat_length = sizeof(techno_beat_times)/sizeof(uint32_t);
+const uint32_t     techno_beat_duration = 3525;
+*/
+
+#define F1_S 17
+#define F1_B 18
+#define F1_N 14
+#define F2_S 60
+#define F2_B 80
+#define F2_N 55
+#define BEAT 300
+
+const uint32_t     techno_beat_times[]     = {     0,   BEAT, 1.5*BEAT, 2*BEAT, 3*BEAT, 3*BEAT, 5*BEAT, 5*BEAT, 5.5*BEAT, 6*BEAT, 7*BEAT,  2102,  2253,  2393,  2833,  3053,  3273 };
+const int          techno_beat_durations[] = {  F2_S,   F1_N,     F2_S,   F2_B,   F1_N,   F2_S,   F1_N,   F2_S,     F2_S,   F2_B,   F1_N,     0,     0,     0,     0,     0,     0 };
+Flamethrower *techno_beat_flamethrowers[] =  { fire2,  fire1,    fire2,  fire2,  fire1,  fire2,  fire1,  fire2,    fire2,  fire2,  fire1, fire1, fire1, fire2, fire1, fire1, fire2 };
+const unsigned int techno_beat_length = 11;
+const uint32_t     techno_beat_duration = 8*BEAT;
+
+
+Beat technoBeat = Beat(techno_beat_times, techno_beat_durations, techno_beat_flamethrowers, techno_beat_length, techno_beat_duration);
+
 
 // Instantiate a Bounce object
 Bounce debouncer_top_left = Bounce();
@@ -77,13 +101,17 @@ void loop()
     bool top_middle_pressed = debouncer_top_middle.fallingEdge();
     bool top_right_pressed = debouncer_top_right.fallingEdge();
     bool bottom_left_pressed = debouncer_bottom_left.fallingEdge();
+    bool bottom_left_released = debouncer_bottom_left.risingEdge();
     bool bottom_right_pressed = debouncer_bottom_right.fallingEdge();
+    bool bottom_right_released = debouncer_bottom_right.risingEdge();
 
-    if(timer % 1000 == 0)
+    if(timer % LOG_INTERVAL == 0)
     {
-        if(timer != loggedTimer)
+        if(timer / LOG_INTERVAL != loggedTimer)
         {
-            loggedTimer = timer;
+            loggedTimer = timer / LOG_INTERVAL;
+            Serial.print("time: ");
+            Serial.println(((float)timer)/1000);
         }
     }
 
@@ -97,8 +125,8 @@ void loop()
     {
         Serial.println("Poof!");
 
-        leftFire.poof(timer, 14);
-        rightFire.poof(timer, 14);
+        //leftFire.poof(timer, 15);
+        rightFire.poof(timer, 54);
     }
 
     if( top_middle_pressed )
@@ -106,9 +134,29 @@ void loop()
         technoBeat.start(timer);
     }
 
-    if( top_right_pressed)
+    if( top_right_pressed )
     {
         technoBeat.stop();
+    }
+
+    if( bottom_right_pressed )
+    {
+        rightFire.stop();
+        rightFire.poof(timer, MAX_POOF_DURATION);
+    }
+    if( bottom_right_released )
+    {
+        rightFire.stop();
+    }
+
+    if( bottom_left_pressed )
+    {
+        leftFire.stop();
+        leftFire.poof(timer, MAX_POOF_DURATION);
+    }
+    if( bottom_left_released )
+    {
+        leftFire.stop();
     }
 }
 

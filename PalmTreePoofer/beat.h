@@ -9,15 +9,18 @@ class Beat
 {
     protected:
         unsigned int    m_length;
-        const unsigned int *m_intervals;
-        const unsigned int *m_durations;
+        const uint32_t *m_beatTimes;
+        const int      *m_durations;
         Flamethrower  **m_flamethrowers;
+        uint32_t        m_beatDuration;
+        
         bool            m_playing;
         unsigned int    m_index;
+        uint32_t        m_beatStartTime;
         uint32_t        m_nextBeatTime;
 
     public:
-        Beat(const unsigned int *intervals, const unsigned int *durations, Flamethrower **flamethrowers, unsigned int length);
+        Beat(const uint32_t *beatTimes, const int *durations, Flamethrower **flamethrowers, unsigned int length, uint32_t beatDuration);
         void start(uint32_t currentTime);
         void stop(void);
         void process(uint32_t currentTime);

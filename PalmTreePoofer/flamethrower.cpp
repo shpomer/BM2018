@@ -1,27 +1,30 @@
 #include "flamethrower.h"
 
-Flamethrower::Flamethrower(unsigned int solenoidPin, unsigned int ledPin)
+Flamethrower::Flamethrower(unsigned int solenoidPin, unsigned int ledPin, unsigned int defaultDuration)
 {
     m_solenoidPin = solenoidPin;
     m_ledPin = ledPin;
+    m_defaultDuration = defaultDuration;
     this->stop();
 }
     
 void Flamethrower::poof(uint32_t currentTime, int duration)
 {
-    if(m_poofing)
+    if(m_poofing || duration < 0)
     {
         return;
     }
 
-    if(duration < 1 || duration > MAX_POOF_DURATION)
+    if(duration == 0 || duration > MAX_POOF_DURATION)
     {
-        duration = MAX_POOF_DURATION;
+        duration = m_defaultDuration;
     }
     m_poofEndTime = currentTime + duration;
     
     digitalWrite(m_solenoidPin, HIGH);
     digitalWrite(m_ledPin, HIGH);
+
+    Serial.println(m_defaultDuration);
     
     m_poofing = true;
 }
