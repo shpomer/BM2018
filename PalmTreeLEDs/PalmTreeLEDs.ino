@@ -145,8 +145,6 @@ int cmdstate4 = 100;
 int cmdstate5 = 100;
 float background_hue = 89.0; //default to green
 
-
-
 void loop() {
   checkSerial();
   if (frameTime > 20) {
@@ -192,23 +190,23 @@ void checkSerial() {
     byte cmd = Serial1.read();
     Serial.println(cmd);
 
-    if (cmd == 1) { //commands are named for the button pin number on Teensy 2.0
+    if (cmd == 1) { //Left btn. Commands are named for the button pin number on Teensy 2.0
       cmdstate1 = 0;
     }
 
-    if (cmd == 3) {
+    if (cmd == 3) { // middle btn
       cmdstate2 = 0;
     }
 
-    if (cmd == 4) { 
+    if (cmd == 4) { //right btn
       cmdstate3 = 0;
     }
 
-    if (cmd == 20) {
+    if (cmd == 20) { //bottom left red glowing btn
       cmdstate4 = 0;
     }
 
-    if (cmd == 2) {
+    if (cmd == 2) { //bottom right yellow glowing btn
       cmdstate5 = 0;
     }
   }
@@ -257,7 +255,6 @@ void colorBackground() {
   }
 }
 
-
 void colorWipe(int color, int wait)
 {
   for (int i=0; i < leds.numPixels(); i++) {
@@ -266,7 +263,19 @@ void colorWipe(int color, int wait)
     delayMicroseconds(wait);
   }
 }
-void colorTrunk(int color, int wait)
+
+void colorTrunks(int color, int wait)
+{
+  for (int i = 0; i < ledsPerTrunk; i++) { 
+    leds.setPixel(i, color);
+  }
+  for (int i = ledsPerTree + ledsPerFronds; i < totalLeds; i++) {
+    leds.setPixel(i, color);
+  }
+  leds.show();
+}
+
+void rainbowTrunks(int color, int wait)
 {
   for (int i=0; i < ledsPerTrunk; i++) {
     for (int trunk_band=41; trunk_band >= 27; trunk_band-=2) {
@@ -276,11 +285,14 @@ void colorTrunk(int color, int wait)
     delayMicroseconds(wait);
   }
 }
+
 void colorFronds(int color, int wait)
 {
   //set color on right fronds
   for (int i = ledsPerTrunk; i < ledsPerTree + ledsPerFronds; i++) { 
     leds.setPixel(i, color);
+    leds.show();
+    delayMicroseconds(wait);
   }
 }
 
@@ -291,6 +303,7 @@ void zipAround(int cmdstate) {
   if (zip_width >= ledsPerTrunk) zip_width = ledsPerTrunk - 1;
   for (int i = color_jump; i < zip_width; i++) {
     leds.setPixel(i, 0xFF7800); //set zip to yellow
+    leds.show(); //not sure if I need to call this or not...
   }
   cmdstate++;
 }
@@ -305,6 +318,7 @@ void zipAroundTrunks(int cmdstate) {
   for (int i = color_jump; i < zip_width; i++) {
     leds.setPixel(i, 0xFF7800); //set zip to yellow
     leds.setPixel((ledsPerTree + ledsPerFronds) + i, 0xFF7800); //set zip to yellow
+    leds.show(); //not sure if I need to call this or not...
   }
   cmdstate++;
 }
