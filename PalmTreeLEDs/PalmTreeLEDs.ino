@@ -54,6 +54,49 @@
 
 #include <OctoWS2811.h>
 
+// Convert HSL (Hue, Saturation, Lightness) to RGB (Red, Green, Blue)
+//
+//   hue:        0 to 359 - position on the color wheel, 0=red, 60=orange,
+//                            120=yellow, 180=green, 240=blue, 300=violet
+//
+//   saturation: 0 to 100 - how bright or dull the color, 100=full, 0=gray
+//
+//   lightness:  0 to 100 - how light the color is, 100=white, 50=color, 0=black
+//
+int makeColor(unsigned int hue, unsigned int saturation, unsigned int lightness)
+{
+  unsigned int red, green, blue;
+  unsigned int var1, var2;
+
+  if (hue > 359) hue = hue % 360;
+  if (saturation > 100) saturation = 100;
+  if (lightness > 100) lightness = 100;
+
+  // algorithm from: http://www.easyrgb.com/index.php?X=MATH&H=19#text19
+  if (saturation == 0) {
+    red = green = blue = lightness * 255 / 100;
+  } else {
+    if (lightness < 50) {
+      var2 = lightness * (100 + saturation);
+    } else {
+      var2 = ((lightness + saturation) * 100) - (saturation * lightness);
+    }
+    var1 = lightness * 200 - var2;
+    red = h2rgb(var1, var2, (hue < 240) ? hue + 120 : hue - 240) * 255 / 600000;
+    green = h2rgb(var1, var2, hue) * 255 / 600000;
+    blue = h2rgb(var1, var2, (hue >= 120) ? hue - 120 : hue + 240) * 255 / 600000;
+  }
+  return (red << 16) | (green << 8) | blue;
+}
+
+unsigned int h2rgb(unsigned int v1, unsigned int v2, unsigned int hue)
+{
+  if (hue < 60) return v1 * 60 + (v2 - v1) * hue;
+  if (hue < 180) return v2 * 60;
+  if (hue < 240) return v1 * 60 + (v2 - v1) * (240 - hue);
+  return v1 * 60;
+}
+
 const int ledsPerFronds = 318;
 const int ledsPerTrunk = 272;
 const int ledsPerTree = 590;
@@ -103,49 +146,6 @@ int cmdstate5 = 100;
 float background_hue = 89.0; //default to green
 
 
-void colorBackground() {
-  float deltahue = ((float)((int)random(2000) - 1000)) * 0.003; // -2.0 to +2.0
-  deltahue += (background_hue - background_hue) * 0.001; // bias towards 269.0
-  //Serial.printf("deltahue = %.2f\n", deltahue);
-  background_hue += deltahue;
-
-  //ADJUST AS NEEDED
-  if (background_hue > 189.0) background_hue = 189.0; //don't get too blue
-  if (background_hue < 80.0) background_hue = 80.0; //don't get too yellow-green
-
-
-  unsigned int trunk_hue = background_hue + 100; //make this browner
-  unsigned int fronds_hue = background_hue;
-  //Serial.printf("hue = %d\n", hue);
-
-  //set color on right trunk
-  for (int i = 0; i < ledsPerTrunk; i++) { 
-    unsigned int saturation = 100 + random(25);
-    unsigned int lightness = 30 + random(10);
-    leds.setPixel(i, makeColor(trunk_hue - (i * 0.6), saturation, lightness));
-  }
-
-  //set color on right fronds
-  for (int i = ledsPerTrunk; i < ledsPerTree; i++) { 
-    unsigned int saturation = 100 + random(25); 
-    unsigned int lightness = 30 + random(10);
-    leds.setPixel(i, makeColor(hue - ((i - ledsPerTrunk) * 0.6), saturation, lightness));
-  }
-
-  //set color on left fronds
-  for (int i = ledsPerTree; i < ledsPerTree + ledsPerFronds; i++) { 
-    unsigned int saturation = 100 + random(25); 
-    unsigned int lightness = 30 + random(10);
-    leds.setPixel(i, makeColor(hue - ((i - ledsPerTree) * 0.6), saturation, lightness));
-  }
-
-  //set color on left trunk
-  for (int i = (ledsPerTree + ledsPerFronds); i < totalLeds; i++) { 
-    unsigned int saturation = 100 + random(25); 
-    unsigned int lightness = 30 + random(10);
-    leds.setPixel(i, makeColor(hue - ((i - totalLeds) * 0.6), saturation, lightness));
-  }
-}
 
 void loop() {
   checkSerial();
@@ -157,29 +157,29 @@ void loop() {
 
     int microsec = 2000000 / leds.numPixels();  // change them all in 2 seconds
 
-    if (vstate1 < 35) {
-      zipAround(vstate1);
+    if (cmdstate1 < 35) {
+      zipAround(cmdstate1);
       colorFronds(RED, microsec);
     }
 
-    if (vstate2 < 35) {
+    if (cmdstate2 < 35) {
       colorWipe(BLUE, microsec);
-      vstate2++;
+      cmdstate2++;
     }
 
-    if (vstate3 < 35) {
+    if (cmdstate3 < 35) {
       colorWipe(PINK, microsec);
-      vstate3++;
+      cmdstate3++;
     }
 
-    if (vstate4 < 35) {
+    if (cmdstate4 < 35) {
       colorTrunk(GREEN, microsec);
-      vstate4++;
+      cmdstate4++;
     }
 
-    if (vstate5 < 35) {
+    if (cmdstate5 < 35) {
       colorTrunk(WHITE, microsec);
-      vstate5++;
+      cmdstate5++;
     }
   }
 }
@@ -211,7 +211,52 @@ void checkSerial() {
     if (cmd == 2) {
       cmdstate5 = 0;
     }
+  }
 }
+void colorBackground() {
+  float deltahue = ((float)((int)random(2000) - 1000)) * 0.003; // -2.0 to +2.0
+  deltahue += (background_hue - background_hue) * 0.001; // bias towards 269.0
+  //Serial.printf("deltahue = %.2f\n", deltahue);
+  background_hue += deltahue;
+
+  //ADJUST AS NEEDED
+  if (background_hue > 189.0) background_hue = 189.0; //don't get too blue
+  if (background_hue < 80.0) background_hue = 80.0; //don't get too yellow-green
+
+
+  unsigned int trunk_hue = background_hue + 100; //make this browner
+  unsigned int fronds_hue = background_hue;
+  //Serial.printf("hue = %d\n", hue);
+
+  //set color on right trunk
+  for (int i = 0; i < ledsPerTrunk; i++) { 
+    unsigned int saturation = 100 + random(25);
+    unsigned int lightness = 30 + random(10);
+    leds.setPixel(i, makeColor(trunk_hue - (i * 0.6), saturation, lightness));
+  }
+
+  //set color on right fronds
+  for (int i = ledsPerTrunk; i < ledsPerTree; i++) { 
+    unsigned int saturation = 100 + random(25); 
+    unsigned int lightness = 30 + random(10);
+    leds.setPixel(i, makeColor(fronds_hue - ((i - ledsPerTrunk) * 0.6), saturation, lightness));
+  }
+
+  //set color on left fronds
+  for (int i = ledsPerTree; i < ledsPerTree + ledsPerFronds; i++) { 
+    unsigned int saturation = 100 + random(25); 
+    unsigned int lightness = 30 + random(10);
+    leds.setPixel(i, makeColor(fronds_hue - ((i - ledsPerTree) * 0.6), saturation, lightness));
+  }
+
+  //set color on left trunk
+  for (int i = (ledsPerTree + ledsPerFronds); i < totalLeds; i++) { 
+    unsigned int saturation = 100 + random(25); 
+    unsigned int lightness = 30 + random(10);
+    leds.setPixel(i, makeColor(trunk_hue - ((i - totalLeds) * 0.6), saturation, lightness));
+  }
+}
+
 
 void colorWipe(int color, int wait)
 {
@@ -239,28 +284,29 @@ void colorFronds(int color, int wait)
   }
 }
 
-void zipAround(int vstate) {
+void zipAround(int cmdstate) {
   //right trunk
-  int color_jump = (float)vstate * (ledsPerTrunk / 35);
+  int color_jump = (float)cmdstate * (ledsPerTrunk / 35);
   int zip_width = color_jump + 2; 
-  if (zip_width >= ledsPerTrunk) pixels_width = ledsPerTrunk - 1;
-  for (int i = color_jump; i < pixels_width; i++) {
+  if (zip_width >= ledsPerTrunk) zip_width = ledsPerTrunk - 1;
+  for (int i = color_jump; i < zip_width; i++) {
     leds.setPixel(i, 0xFF7800); //set zip to yellow
   }
-  vstate++;
+  cmdstate++;
 }
 
-void zipAroundTrunks(int vstate) {
+void zipAroundTrunks(int cmdstate) {
   //right trunk
-  int color_jump = (float)vstate * (ledsPerTrunk / 35);
+  int color_jump = (float)cmdstate * (ledsPerTrunk / 35);
   int zip_width = color_jump + 2; 
   if (zip_width >= ledsPerTrunk) {
-    pixels_width = ledsPerTrunk - 1;
+    zip_width = ledsPerTrunk - 1;
   }
   for (int i = color_jump; i < zip_width; i++) {
     leds.setPixel(i, 0xFF7800); //set zip to yellow
     leds.setPixel((ledsPerTree + ledsPerFronds) + i, 0xFF7800); //set zip to yellow
   }
-  vstate++;
+  cmdstate++;
 }
+
 
