@@ -128,11 +128,12 @@ void setup() {
 */
 
 #define RED    0x160000
+#define ORANGE 0x100400
+#define YELLOW 0x101400
 #define GREEN  0x001600
 #define BLUE   0x000016
-#define YELLOW 0x101400
+#define PURPLE 0x160016
 #define PINK   0x120009
-#define ORANGE 0x100400
 #define WHITE  0x101010
 
 elapsedMillis frameTime;
@@ -178,6 +179,9 @@ void loop() {
     if (cmdstate5 < 35) {
       colorTrunk(WHITE, microsec);
       cmdstate5++;
+    }
+    else {
+      rainbowTrunks();
     }
   }
 }
@@ -275,14 +279,42 @@ void colorTrunks(int color, int wait)
   leds.show();
 }
 
-void rainbowTrunks(int color, int wait)
+void rainbowTrunks(int wait)
 {
   for (int i=0; i < ledsPerTrunk; i++) {
-    for (int trunk_band=41; trunk_band >= 27; trunk_band-=2) {
-      leds.setPixel(trunk_band, color); //how do I set multiple pixels at once?
-      leds.show();
+    if (i <= 41) {
+      leds.setPixel(i, RED);
+      delayMicroseconds(wait);
     }
-    delayMicroseconds(wait);
+    if (i > 41 && i <= 80) {
+      leds.setPixel(i, ORANGE);
+      delayMicroseconds(wait);
+    }
+    if (i > 80 && i <= 117) {
+      leds.setPixel(i, YELLOW);
+      delayMicroseconds(wait);
+    }
+    if (i > 117 && i <= 152) {
+      leds.setPixel(i, GREEN);
+      delayMicroseconds(wait);
+    }
+    if (i > 152 && i <= 185) {
+      leds.setPixel(i, BLUE);
+      delayMicroseconds(wait);
+    }
+    if (i > 185 && i <= 216) {
+      leds.setPixel(i, PURPLE);
+      delayMicroseconds(wait);
+    }
+    If (i > 216 && i <= 245) {
+      leds.setPixel(i, PINK);
+      delayMicroseconds(wait);
+    }
+    If (i > 245 && i <= 272) {
+      leds.setPixel(i, WHITE);
+      delayMicroseconds(wait);
+    }
+    LEDS.show();
   }
 }
 
