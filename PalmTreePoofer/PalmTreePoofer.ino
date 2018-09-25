@@ -1,8 +1,6 @@
 
 /* 
- DESCRIPTION
- ====================
- Simple example of the Bounce library that switches the debug LED when a button is pressed.
+This code is for Teensy 2.0 (Controller)
  */
 // Include the Bounce2 library found here :
 // https://github.com/thomasfredericks/Bounce-Arduino-Wiring
@@ -85,8 +83,8 @@ void setup()
     debouncer_top_right.interval(5); // interval in ms
     debouncer_bottom_left.interval(5); // interval in ms
     debouncer_bottom_right.interval(5); // interval in ms
-
-    Serial1.begin(9600);
+    
+    Serial.begin(9600);
 }
 
 void loop()
@@ -126,8 +124,7 @@ void loop()
     if ( top_left_pressed )
     {
         technoBeat.start(timer);
-
-        Serial1.write(1);
+        Serial.write(3);
     }
 
     if( top_middle_pressed )
@@ -137,14 +134,13 @@ void loop()
         //leftFire.poof(timer, 15);
         rightFire.poof(timer, 54);
 
-        Serial1.write(2);
+        Serial.write(1);
     }
 
     if( top_right_pressed )
     {
+        Serial.write(4);
         technoBeat.stop();
-
-        Serial1.write(3);
     }
 
     if( bottom_right_pressed )
@@ -152,7 +148,7 @@ void loop()
         leftFire.stop();
         leftFire.poof(timer, MAX_POOF_DURATION);
 
-        Serial1.write(4);
+        Serial.write(4);
     }
     if( bottom_right_released )
     {
@@ -164,7 +160,7 @@ void loop()
         rightFire.stop();
         rightFire.poof(timer, MAX_POOF_DURATION);
 
-        Serial1.write(5);
+        Serial.write(5);
     }
     if( bottom_left_released )
     {
