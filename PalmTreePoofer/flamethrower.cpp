@@ -22,7 +22,7 @@ void Flamethrower::poof(uint32_t currentTime, int duration)
     m_poofEndTime = currentTime + duration;
     
     digitalWrite(m_solenoidPin, HIGH);
-    digitalWrite(m_ledPin, HIGH);
+    digitalWrite(m_ledPin, LOW);
 
     Serial.println(m_defaultDuration);
     
@@ -32,7 +32,7 @@ void Flamethrower::poof(uint32_t currentTime, int duration)
 void Flamethrower::stop(void)
 {
     digitalWrite(m_solenoidPin, LOW);
-    digitalWrite(m_ledPin, LOW);
+    digitalWrite(m_ledPin, HIGH);
     
     m_poofing = false;
 }

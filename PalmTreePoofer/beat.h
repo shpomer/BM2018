@@ -5,6 +5,8 @@
 #include <Arduino.h>
 #include "flamethrower.h"
 
+#define N_FULL_BEATS_MAX 4
+
 class Beat
 {
     protected:
@@ -13,6 +15,7 @@ class Beat
         const int      *m_durations;
         Flamethrower  **m_flamethrowers;
         uint32_t        m_beatDuration;
+        unsigned int    m_nFullBeats;
         
         bool            m_playing;
         unsigned int    m_index;

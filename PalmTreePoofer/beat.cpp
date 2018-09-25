@@ -17,6 +17,7 @@ void Beat::start(uint32_t currentTime)
     m_beatStartTime = currentTime;
     m_nextBeatTime = m_beatStartTime + m_beatTimes[m_index];
     m_playing = true;
+    m_nFullBeats = 0;
 }
 
 void Beat::stop(void)
@@ -39,6 +40,11 @@ void Beat::process(uint32_t currentTime)
             {
                 m_index = 0;
                 m_beatStartTime = currentTime;
+                m_nFullBeats++;
+                if(m_nFullBeats >= N_FULL_BEATS_MAX)
+                {
+                    this->stop();
+                }
             }
         }
         else

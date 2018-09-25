@@ -19,8 +19,8 @@
 
 #define SOLENOID_LEFT 13
 #define SOLENOID_RIGHT 18
-#define LED_LEFT 19
-#define LED_RIGHT 12
+#define LED_LEFT 12
+#define LED_RIGHT 19
 
 #define LOG_INTERVAL 1000
 
@@ -47,7 +47,7 @@ const uint32_t     techno_beat_duration = 3525;
 #define F2_N 55
 #define BEAT 300
 
-const uint32_t     techno_beat_times[]     = {     0,   BEAT, 1.5*BEAT, 2*BEAT, 3*BEAT, 3*BEAT, 5*BEAT, 5*BEAT, 5.5*BEAT, 6*BEAT, 7*BEAT,  2102,  2253,  2393,  2833,  3053,  3273 };
+const uint32_t     techno_beat_times[]     = {     0,   BEAT, 1.5*BEAT, 2*BEAT, 3*BEAT, 4*BEAT, 5*BEAT, 5*BEAT, 5.5*BEAT, 6*BEAT, 7*BEAT,  2102,  2253,  2393,  2833,  3053,  3273 };
 const int          techno_beat_durations[] = {  F2_S,   F1_N,     F2_S,   F2_B,   F1_N,   F2_S,   F1_N,   F2_S,     F2_S,   F2_B,   F1_N,     0,     0,     0,     0,     0,     0 };
 Flamethrower *techno_beat_flamethrowers[] =  { fire2,  fire1,    fire2,  fire2,  fire1,  fire2,  fire1,  fire2,    fire2,  fire2,  fire1, fire1, fire1, fire2, fire1, fire1, fire2 };
 const unsigned int techno_beat_length = 11;
@@ -85,6 +85,8 @@ void setup()
     debouncer_top_right.interval(5); // interval in ms
     debouncer_bottom_left.interval(5); // interval in ms
     debouncer_bottom_right.interval(5); // interval in ms
+
+    Serial1.begin(9600);
 }
 
 void loop()
@@ -123,40 +125,50 @@ void loop()
     // Turn on or off the LED as determined by the state :
     if ( top_left_pressed )
     {
-        Serial.println("Poof!");
+        technoBeat.start(timer);
 
-        //leftFire.poof(timer, 15);
-        rightFire.poof(timer, 54);
+        Serial1.write(1);
     }
 
     if( top_middle_pressed )
     {
-        technoBeat.start(timer);
+        Serial.println("Poof!");
+
+        //leftFire.poof(timer, 15);
+        rightFire.poof(timer, 54);
+
+        Serial1.write(2);
     }
 
     if( top_right_pressed )
     {
         technoBeat.stop();
+
+        Serial1.write(3);
     }
 
     if( bottom_right_pressed )
     {
-        rightFire.stop();
-        rightFire.poof(timer, MAX_POOF_DURATION);
+        leftFire.stop();
+        leftFire.poof(timer, MAX_POOF_DURATION);
+
+        Serial1.write(4);
     }
     if( bottom_right_released )
     {
-        rightFire.stop();
+        leftFire.stop();
     }
 
     if( bottom_left_pressed )
     {
-        leftFire.stop();
-        leftFire.poof(timer, MAX_POOF_DURATION);
+        rightFire.stop();
+        rightFire.poof(timer, MAX_POOF_DURATION);
+
+        Serial1.write(5);
     }
     if( bottom_left_released )
     {
-        leftFire.stop();
+        rightFire.stop();
     }
 }
 
